@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QTimer
+import bcrypt
 from PyQt6.QtWidgets import QLineEdit
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox, QComboBox)
 
@@ -88,8 +88,12 @@ class RegisterWindow(QWidget):
             QMessageBox.warning(self, "注册失败", "密码不符合安全要求。请检查密码强度提示。")
             return
 
+        # 对密码和密保答案进行哈希处理
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        hashed_security_answer = bcrypt.hashpw(security_answer.encode('utf-8'), bcrypt.gensalt())
+
         # 尝试添加新用户
-        if self.db.add_user(username, password, security_question, security_answer):
+        if self.db.add_user(username, hashed_password, security_question, hashed_security_answer):
             QMessageBox.information(self, "注册成功", "您已成功注册。")
             self.close()
         else:

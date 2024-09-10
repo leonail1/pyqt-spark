@@ -19,16 +19,19 @@ class Database:
         ''')
         self.conn.commit()
 
-    def verify_user(self, username, password):
+    def verify_user(self, username, hashed_password):
         # 验证用户名和密码
-        self.cursor.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
-        return self.cursor.fetchone() is not None
+        self.cursor.execute("SELECT password FROM users WHERE username=?", (username,))
+        result = self.cursor.fetchone()
+        if result:
+            return result[0] == hashed_password
+        return False
 
-    def add_user(self, username, password, security_question, security_answer):
+    def add_user(self, username, hashed_password, security_question, hashed_security_answer):
         # 添加新用户
         try:
             self.cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?)",
-                                (username, password, security_question, security_answer))
+                                (username, hashed_password, security_question, hashed_security_answer))
             self.conn.commit()
             return True
         except sqlite3.IntegrityError:
@@ -40,15 +43,17 @@ class Database:
         self.cursor.execute("SELECT * FROM users WHERE username=?", (username,))
         return self.cursor.fetchone() is not None
 
-    def verify_security_answer(self, username, security_answer):
+    def verify_security_answer(self, username, hashed_security_answer):
         # 验证安全问题答案
-        self.cursor.execute("SELECT * FROM users WHERE username=? AND security_answer=?",
-                            (username, security_answer))
-        return self.cursor.fetchone() is not None
+        self.cursor.execute("SELECT security_answer FROM users WHERE username=?", (username,))
+        result = self.cursor.fetchone()
+        if result:
+            return result[0] == hashed_security_answer
+        return False
 
-    def update_password(self, username, new_password):
+    def update_password(self, username, new_hashed_password):
         # 更新用户密码
-        self.cursor.execute("UPDATE users SET password=? WHERE username=?", (new_password, username))
+        self.cursor.execute("UPDATE users SET password=? WHERE username=?", (new_hashed_password, username))
         self.conn.commit()
 
     def get_security_question(self, username):
